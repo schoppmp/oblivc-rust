@@ -1,0 +1,6 @@
+[package]
+name = "oblivc-sys"
+version = "0.1.0"
+authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
+
+[dependencies]
