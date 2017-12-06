@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
 
 [dependencies]
+libc = "0.2"
 
 [build-dependencies]
 walkdir = "2"
+bindgen = "0.26.3"
