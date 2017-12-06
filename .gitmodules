@@ -1,0 +1,3 @@
+[submodule "oblivc-sys/obliv-c"]
+	path = oblivc-sys/obliv-c
+	url = https://github.com/samee/obliv-c
