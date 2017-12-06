@@ -1,7 +1,13 @@
 [package]
-name = "oblivc-sys"
+name = "oblivc"
 version = "0.1.0"
 authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
+description = "Wrapper for Obliv-C"
+license = "AGPL-3.0"
+readme = "README.md"
+repository = "https://github.com/schoppmp/oblivc-rust"
+homepage = "https://github.com/schoppmp/oblivc-rust"
+categories = ["api-bindings"]
 
 [dependencies]
 oblivc-sys = { path = "oblivc-sys", version = "0.1.0" }
