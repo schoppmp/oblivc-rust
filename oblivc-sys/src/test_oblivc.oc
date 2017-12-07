@@ -1,0 +1,20 @@
+#include <obliv.oh>
+
+typedef struct {
+  int input;
+  char output;
+} test_millionaire_args;
+
+
+void obliv_test_millionaire(void *vargs) {
+  test_millionaire_args *args = vargs;
+  obliv long in1 = feedOblivInt(args->input, 1);
+  obliv long in2 = feedOblivInt(args->input, 2);
+  obliv char out = -1;
+  obliv if(in1 > in2) {
+    out = 1;
+  } else obliv if(in1 == in2) {
+    out = 0;
+  }
+  revealOblivChar(&args->output, out, 0);
+}

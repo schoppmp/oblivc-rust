@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
 
 [dependencies]
-libc = "0.2"
+gcrypt = "0.5.4"
 
 [build-dependencies]
 walkdir = "2"

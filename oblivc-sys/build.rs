@@ -37,7 +37,7 @@ fn main() {
     let oblivc_path = if oblivc_path.is_absolute() {
         oblivc_path
     } else {
-        env::current_dir().unwrap().join(oblivc_path)
+        t!(env::current_dir()).join(oblivc_path)
     };
 
     // build obliv-c
@@ -52,27 +52,40 @@ fn main() {
         panic!("Building Obliv-C failed");
     }
     // link oblivcc and libobliv.a to OUT_DIR
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let oblivc_src_path = oblivc_path.join("src");
+    let oblivc_bin_path = oblivc_path.join("bin");
+    let oblivc_libobliv_path = oblivc_path.join("_build/libobliv.a");
+    let out_path = PathBuf::from(t!(env::var("OUT_DIR")));
     let out_libobliv_path = out_path.join("libobliv.a");
-    let out_oblivcc_path = out_path.join("oblivcc");
-    t!(std::fs::remove_file(&out_libobliv_path));
-    t!(std::fs::remove_file(&out_oblivcc_path));
-    t!(std::os::unix::fs::symlink(oblivc_path.join("_build/libobliv.a"), &out_libobliv_path));
-    t!(std::os::unix::fs::symlink(oblivc_path.join("bin/oblivcc"), &out_oblivcc_path));
+    let out_bin_path = out_path.join("bin");
+    // delete previous symlinks, ignoring errors'
+    let _ = std::fs::remove_file(&out_libobliv_path);
+    let _ = std::fs::remove_file(&out_bin_path);
+    t!(std::os::unix::fs::symlink(&oblivc_libobliv_path, &out_libobliv_path));
+    t!(std::os::unix::fs::symlink(&oblivc_bin_path, &out_bin_path));
 
-    // tell cargo to tell rustc to link libobliv.a
+    // tell cargo to tell rustc to link libobliv.a and gcrypt
     println!("cargo:rustc-link-search=native={}", out_path.to_str().unwrap());
     println!("cargo:rustc-link-lib=static=obliv");
+    println!("cargo:rustc-link-lib=static=gcrypt");
+    println!("cargo:rustc-link-lib=static=gpg-error");
 
     // register to rebuild when something changes
-    for file in WalkDir::new(oblivc_path.join("src"))
-                        .into_iter()
-                        .filter_map(|e| e.ok()) {
-        if let Some(s) = file.path().to_str() {
-            println!("cargo:rerun-if-changed={}", s);
+    let register_dir_rebuild = |dir: &AsRef<Path>| {
+        for file in WalkDir::new(dir)
+                            .into_iter()
+                            .filter_map(|e| e.ok()) {
+            if let Some(s) = file.path().to_str() {
+                println!("cargo:rerun-if-changed={}", s);
+            }
         }
-    }
-    println!("cargo:rerun-if-changed={}", oblivc_path.join("_build/libobliv.a").to_str().unwrap());
+    };
+    register_dir_rebuild(&oblivc_src_path);
+    register_dir_rebuild(&oblivc_bin_path);
+    register_dir_rebuild(&"src");
+    println!("cargo:rerun-if-changed={}", oblivc_libobliv_path.to_str().unwrap());
+    // also rerun if OBLIVC_PATH changes
+    println!("cargo:rerun-if-env-changed=OBLIVC_PATH");
 
     // add obliv-c source directory to CPATH for bindgen to find them
     let mut paths = Vec::<PathBuf>::new();
@@ -80,7 +93,7 @@ fn main() {
         paths = env::split_paths(&path).collect();
     }
     paths.push(oblivc_path.join("src/ext/oblivc"));
-    let new_path = env::join_paths(paths).unwrap();
+    let new_path = t!(env::join_paths(paths));
     env::set_var("CPATH", &new_path);
 
     // all functions in "obliv.h", but not in included headers
@@ -119,5 +132,23 @@ fn main() {
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     bindings
         .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
+        .expect("Couldn't write bindings");
+
+    // compile test_oblivc.oc
+    // oblivcc doesn't properly set its exit status, so check if stderr is empty
+    let output = t!(String::from_utf8(t!(Command::new(out_bin_path.join("oblivcc"))
+                    .args(&["-c", "-o"]).arg(out_path.join("test_oblivc.oo"))
+                    .arg("src/test_oblivc.oc")
+                    .output()).stderr));
+    if !output.is_empty() {
+        panic!("Compiling test.oc failed: {}", output);
+    }
+    // archive test_oblivc.oo
+    let status = t!(Command::new("ar").args(&["crus", "libtest_oblivc.a", "test_oblivc.oo"])
+                      .current_dir(&out_path)
+                      .status());
+    if !status.success() {
+      panic!("Creating libtest_oblivc.a failed");
+    }
+
 }
