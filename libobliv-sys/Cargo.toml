@@ -18,5 +18,8 @@ libgcrypt-sys = "0.5.4"
 libgpg-error-sys = "0.2.3"
 
 [build-dependencies]
+libgcrypt-sys = "0.5.4"
+libgpg-error-sys = "0.2.3"
 walkdir = "2"
 bindgen = "0.26.3"
+cc = "1.0"

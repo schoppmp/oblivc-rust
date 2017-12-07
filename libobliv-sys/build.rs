@@ -1,5 +1,6 @@
 extern crate walkdir;
 extern crate bindgen;
+extern crate cc;
 
 use std::process::Command;
 use std::path::{Path,PathBuf};
@@ -57,13 +58,13 @@ fn main() {
     let out_path = PathBuf::from(t!(env::var("OUT_DIR")));
     let out_libobliv_path = out_path.join("libobliv.a");
     let out_bin_path = out_path.join("bin");
-    // delete previous symlinks, ignoring errors'
+    // delete previous symlinks, ignoring errors
     let _ = std::fs::remove_file(&out_libobliv_path);
     let _ = std::fs::remove_file(&out_bin_path);
     t!(std::os::unix::fs::symlink(&oblivc_libobliv_path, &out_libobliv_path));
     t!(std::os::unix::fs::symlink(&oblivc_bin_path, &out_bin_path));
 
-    // tell cargo to tell rustc to link libobliv.a and gcrypt
+    // tell cargo to tell rustc to link libobliv.a
     println!("cargo:rustc-link-search=native={}", out_path.display());
     println!("cargo:rustc-link-lib=static=obliv");
 
@@ -129,21 +130,11 @@ fn main() {
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings");
 
-    // compile test_oblivc.oc
-    // oblivcc doesn't properly set its exit status, so check if stderr is empty
-    let output = t!(String::from_utf8(t!(Command::new(out_bin_path.join("oblivcc"))
-                    .args(&["-c", "-o"]).arg(out_path.join("test_oblivc.oo"))
-                    .arg("src/test_oblivc.oc")
-                    .output()).stderr));
-    if !output.is_empty() {
-        panic!("Compiling test_oblivc.oc failed: {}", output);
-    }
-    // archive test_oblivc.oo
-    let status = t!(Command::new("ar").args(&["crus", "libtest_oblivc.a", "test_oblivc.oo"])
-                      .current_dir(&out_path)
-                      .status());
-    if !status.success() {
-      panic!("Creating libtest_oblivc.a failed");
-    }
-
+    // Compile tests
+    cc::Build::new()
+        .compiler(out_bin_path.join("oblivcc"))
+        .include(PathBuf::from(t!(env::var("DEP_GCRYPT_ROOT"))).join("include"))
+        .include(PathBuf::from(t!(env::var("DEP_GPG_ERROR_ROOT"))).join("include"))
+        .file("src/test_oblivc.oc")
+        .compile("libtest_oblivc.a");
 }
