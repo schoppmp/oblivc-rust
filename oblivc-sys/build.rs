@@ -65,25 +65,21 @@ fn main() {
     t!(std::os::unix::fs::symlink(&oblivc_bin_path, &out_bin_path));
 
     // tell cargo to tell rustc to link libobliv.a and gcrypt
-    println!("cargo:rustc-link-search=native={}", out_path.to_str().unwrap());
+    println!("cargo:rustc-link-search=native={}", out_path.display());
     println!("cargo:rustc-link-lib=static=obliv");
-    println!("cargo:rustc-link-lib=static=gcrypt");
-    println!("cargo:rustc-link-lib=static=gpg-error");
 
     // register to rebuild when something changes
     let register_dir_rebuild = |dir: &AsRef<Path>| {
         for file in WalkDir::new(dir)
                             .into_iter()
                             .filter_map(|e| e.ok()) {
-            if let Some(s) = file.path().to_str() {
-                println!("cargo:rerun-if-changed={}", s);
-            }
+            println!("cargo:rerun-if-changed={}", file.path().display());
         }
     };
     register_dir_rebuild(&oblivc_src_path);
     register_dir_rebuild(&oblivc_bin_path);
     register_dir_rebuild(&"src");
-    println!("cargo:rerun-if-changed={}", oblivc_libobliv_path.to_str().unwrap());
+    println!("cargo:rerun-if-changed={}", oblivc_libobliv_path.display());
     // also rerun if OBLIVC_PATH changes
     println!("cargo:rerun-if-env-changed=OBLIVC_PATH");
 
@@ -141,7 +137,7 @@ fn main() {
                     .arg("src/test_oblivc.oc")
                     .output()).stderr));
     if !output.is_empty() {
-        panic!("Compiling test.oc failed: {}", output);
+        panic!("Compiling test_oblivc.oc failed: {}", output);
     }
     // archive test_oblivc.oo
     let status = t!(Command::new("ar").args(&["crus", "libtest_oblivc.a", "test_oblivc.oo"])

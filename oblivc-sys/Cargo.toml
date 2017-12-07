@@ -2,9 +2,17 @@
 name = "oblivc-sys"
 version = "0.1.0"
 authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
+description = "Raw bindings for Obliv-C"
+license = "AGPL-3.0"
+readme = "README.md"
+repository = "https://github.com/schoppmp/oblivc-rust"
+homepage = "https://github.com/schoppmp/oblivc-rust"
+categories = ["external-ffi-bindings"]
+links = "obliv"
 
 [dependencies]
-gcrypt = "0.5.4"
+libgcrypt-sys = "0.5.4"
+libgpg-error-sys = "0.2.3"
 
 [build-dependencies]
 walkdir = "2"

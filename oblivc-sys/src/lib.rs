@@ -2,6 +2,9 @@
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 
+extern crate libgpg_error_sys;
+extern crate libgcrypt_sys;
+
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(test)]
@@ -25,7 +28,6 @@ mod test {
         // spawn two threads, one for the server and one for the client
         let handles : Vec<_> = (1..3).map(|party| {
             thread::spawn(move || {
-                println!("party: {}", party);
                 let mut args = TestMillionaireArgs{
                     input: (10000 + 100 * party) as c_int,
                     output: 0i8,

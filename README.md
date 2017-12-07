@@ -5,5 +5,6 @@ Rust wrapper for Obliv-C
 C-like programs.
 This wrapper allows to develop Rust programs that call Obliv-C protocols.
 
-If Obliv-C is installed system-wide, that installation is used. Otherwise,
-Obliv-C will be built from source.
+If an Obliv-C installation is passed via the `OBLIVC_PATH` environment
+variable, that installation is used.
+Otherwise, Obliv-C is built from source.
