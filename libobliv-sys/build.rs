@@ -83,14 +83,21 @@ fn main() {
     // also rerun if OBLIVC_PATH changes
     println!("cargo:rerun-if-env-changed=OBLIVC_PATH");
 
-    // add obliv-c source directory to CPATH for bindgen to find them
-    let mut paths = Vec::<PathBuf>::new();
+    // collect include paths (including dependencies)
+    let include_paths = vec![
+        oblivc_path.join("src/ext/oblivc"),
+        PathBuf::from(t!(env::var("DEP_GCRYPT_ROOT"))).join("include"),
+        PathBuf::from(t!(env::var("DEP_GPG_ERROR_ROOT"))).join("include"),
+    ];
+
+    // add include paths to CPATH for bindgen/cc to find them
+    let mut cpath = Vec::<PathBuf>::new();
     if let Some(path) = env::var_os("CPATH") {
-        paths = env::split_paths(&path).collect();
+        cpath = env::split_paths(&path).collect();
     }
-    paths.push(oblivc_path.join("src/ext/oblivc"));
-    let new_path = t!(env::join_paths(paths));
-    env::set_var("CPATH", &new_path);
+    cpath.extend_from_slice(&include_paths);
+    let cpath_env = t!(env::join_paths(cpath));
+    env::set_var("CPATH", &cpath_env);
 
     // all functions in "obliv.h", but not in included headers
     let bind_functions = vec![
@@ -116,14 +123,15 @@ fn main() {
         "tcp2PBytesSent",
         "tcp2PFlushCount",
     ];
+
     // generate bindings
     let bindings = bind_functions.iter().fold(
             bindgen::Builder::default()
                 .header(oblivc_path.join("src/ext/oblivc/obliv.h").to_str().unwrap()),
             |builder, func| builder.whitelisted_function(func)
         )
-         .generate()
-         .expect("Unable to generate bindings");
+        .generate()
+        .expect("Unable to generate bindings");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     bindings
@@ -131,10 +139,7 @@ fn main() {
         .expect("Couldn't write bindings");
 
     // Compile tests
-    cc::Build::new()
-        .compiler(out_bin_path.join("oblivcc"))
-        .include(PathBuf::from(t!(env::var("DEP_GCRYPT_ROOT"))).join("include"))
-        .include(PathBuf::from(t!(env::var("DEP_GPG_ERROR_ROOT"))).join("include"))
+    cc::Build::new().compiler(out_bin_path.join("oblivcc"))
         .file("src/test_oblivc.oc")
         .compile("libtest_oblivc.a");
 }
