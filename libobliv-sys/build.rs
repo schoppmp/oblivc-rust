@@ -1,7 +1,6 @@
 extern crate walkdir;
 extern crate bindgen;
 
-
 use std::process::Command;
 use std::path::{Path,PathBuf};
 use std::env;

@@ -1,3 +1,5 @@
+extern crate libobliv_sys;
+
 #[cfg(test)]
 mod tests {
     #[test]

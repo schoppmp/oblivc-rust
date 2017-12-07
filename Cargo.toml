@@ -10,4 +10,4 @@ homepage = "https://github.com/schoppmp/oblivc-rust"
 categories = ["api-bindings"]
 
 [dependencies]
-oblivc-sys = { path = "oblivc-sys", version = "0.1.0" }
+libobliv-sys = { path = "libobliv-sys", version = "0.1.0" }
