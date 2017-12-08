@@ -12,6 +12,8 @@ categories = ["api-bindings"]
 [dependencies]
 libobliv-sys = { path = "libobliv-sys", version = "0.1.0" }
 cc = "1.0"
+lazy_static = "1.0.0"
+bindgen = "0.31.3"
 
 [build-dependencies]
 libobliv-sys = { path = "libobliv-sys", version = "0.1.0" }
