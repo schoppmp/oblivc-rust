@@ -92,15 +92,6 @@ fn main() {
     ];
     println!("cargo:include={}", t!(env::join_paths(&include_paths)).to_str().unwrap());
 
-    // add include paths to CPATH for bindgen/cc to find them
-    let mut cpath = Vec::<PathBuf>::new();
-    if let Some(path) = env::var_os("CPATH") {
-        cpath = env::split_paths(&path).collect();
-    }
-    cpath.extend_from_slice(&include_paths);
-    let cpath_env = t!(env::join_paths(cpath));
-    env::set_var("CPATH", &cpath_env);
-
     // all functions in "obliv.h", but not in included headers
     let bind_functions = vec![
         "protocolUseStdio",
@@ -130,8 +121,9 @@ fn main() {
     let bindings = bind_functions.iter().fold(
             bindgen::Builder::default()
                 .header(oblivc_path.join("src/ext/oblivc/obliv.h").to_str().unwrap()),
-            |builder, func| builder.whitelisted_function(func)
+            |builder, func| builder.whitelist_function(func)
         )
+        .clang_args(include_paths.iter().map(|p| format!("-I{}", p.display())))
         .generate()
         .expect("Unable to generate bindings");
 
@@ -141,7 +133,10 @@ fn main() {
         .expect("Couldn't write bindings");
 
     // Compile tests
-    cc::Build::new().compiler(out_bin_path.join("oblivcc"))
+    include_paths.iter().fold(
+            cc::Build::new().compiler(out_bin_path.join("oblivcc")),
+            |builder, path| builder.include(path)
+        )
         .file("src/test_oblivc.oc")
-        .compile("libtest_oblivc.a");
+        .compile("libtest_oblivc.a")
 }
