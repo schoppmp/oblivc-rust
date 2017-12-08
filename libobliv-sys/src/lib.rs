@@ -21,7 +21,7 @@ mod test {
         output: i8,
     }
     #[link(name="test_oblivc", kind="static")]
-    extern "C" { fn obliv_test_millionaire(arg: *mut c_void); }
+    extern "C" { fn millionaire(arg: *mut c_void); }
 
     #[test]
     fn test_millionaire() {
@@ -48,7 +48,7 @@ mod test {
                     }
                     // run millionnaire's problem
                     execYaoProtocol(&mut pd,
-                        Some(obliv_test_millionaire),
+                        Some(millionaire),
                         &mut args as *mut _ as *mut c_void
                     );
                     cleanupProtocol(&mut pd);

@@ -3,11 +3,11 @@
 typedef struct {
   int input;
   char output;
-} test_millionaire_args;
+} millionaire_args;
 
 
-void obliv_test_millionaire(void *vargs) {
-  test_millionaire_args *args = vargs;
+void millionaire(void *vargs) {
+  millionaire_args *args = vargs;
   obliv long in1 = feedOblivInt(args->input, 1);
   obliv long in2 = feedOblivInt(args->input, 2);
   obliv char out = -1;
