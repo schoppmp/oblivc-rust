@@ -1,9 +1,13 @@
 extern crate libobliv_sys;
 
+mod compiler;
+pub use compiler::*;
+
 #[cfg(test)]
 mod tests {
+    use super::*;
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn new_builder() {
+        let _ = compiler::new_builder();
     }
 }

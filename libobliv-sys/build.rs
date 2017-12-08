@@ -65,6 +65,7 @@ fn main() {
     t!(std::os::unix::fs::symlink(&oblivc_bin_path, &out_bin_path));
 
     // tell cargo to tell rustc to link libobliv.a
+    println!("cargo:root={}", out_path.display());
     println!("cargo:rustc-link-search=native={}", out_path.display());
     println!("cargo:rustc-link-lib=static=obliv");
 
@@ -89,6 +90,7 @@ fn main() {
         PathBuf::from(t!(env::var("DEP_GCRYPT_ROOT"))).join("include"),
         PathBuf::from(t!(env::var("DEP_GPG_ERROR_ROOT"))).join("include"),
     ];
+    println!("cargo:include={}", t!(env::join_paths(&include_paths)).to_str().unwrap());
 
     // add include paths to CPATH for bindgen/cc to find them
     let mut cpath = Vec::<PathBuf>::new();
