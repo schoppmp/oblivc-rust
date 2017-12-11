@@ -7,6 +7,8 @@ include!(concat!(env!("OUT_DIR"), "/millionaire.rs"));
 mod tests {
     use super::*;
     use std::thread;
+    use std::net::{TcpListener,TcpStream};
+    use std::io::{Read,Write};
 
     #[test]
     fn test_millionaire() {
@@ -34,5 +36,74 @@ mod tests {
         server.join().unwrap();
         // party 1 < party 2
         assert!(args.output == -1);
+    }
+
+    #[test]
+    fn test_millionaire_stream() {
+        let server = thread::spawn(|| {
+            let mut args = millionaire_args {
+                input: 10,
+                output: 0,
+            };
+            let listener = TcpListener::bind("0.0.0.0:56735").unwrap();
+            let (mut stream, _) = listener.accept().unwrap();
+            stream.set_nodelay(true).unwrap();
+            oblivc::protocol_desc()
+                .use_stream(&mut stream)
+                .party(1)
+                .exec_yao_protocol(millionaire, &mut args);
+            stream.read_exact(&mut [0; 4]).unwrap();
+            // run again with roles reversed
+            oblivc::protocol_desc()
+                .party(2)
+                .use_stream(&mut stream)
+                .exec_yao_protocol(millionaire, &mut args);
+        });
+        let mut args = millionaire_args {
+            input: 20,
+            output: 0,
+        };
+        let mut stream = {|| { loop { match TcpStream::connect("localhost:56735") {
+            Ok(s) => return s,
+            Err(_) => thread::sleep(std::time::Duration::from_millis(100)),
+        }}}}();
+        stream.set_nodelay(true).unwrap();
+        oblivc::protocol_desc()
+            .party(2)
+            .use_stream(&mut stream)
+            .exec_yao_protocol(millionaire, &mut args);
+        assert!(args.output == -1);
+        // we can use the same stream outside obliv-c
+        stream.write_all(b"blah").unwrap();
+        // use it for obliv-c again
+        oblivc::protocol_desc()
+            .party(1)
+            .use_stream(&mut stream)
+            .exec_yao_protocol(millionaire, &mut args);
+        assert!(args.output == 1);
+        server.join().unwrap();
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_no_party() {
+        let mut args = millionaire_args {
+            input: 0,
+            output: 0,
+        };
+        oblivc::protocol_desc()
+            .exec_yao_protocol(millionaire, &mut args);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_no_trans() {
+        let mut args = millionaire_args {
+            input: 0,
+            output: 0,
+        };
+        oblivc::protocol_desc()
+            .party(1)
+            .exec_yao_protocol(millionaire, &mut args);
     }
 }

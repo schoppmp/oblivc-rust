@@ -15,6 +15,6 @@ fn main() {
         .generate().unwrap()
         .write_to_file(out_path.join("millionaire.rs")).unwrap();
 
-    println!("cargo:rerun-if-env-changed=src/millionaire.h");
-    println!("cargo:rerun-if-env-changed=src/millionaire.oc");
+    println!("cargo:rerun-if-changed=src/millionaire.h");
+    println!("cargo:rerun-if-changed=src/millionaire.oc");
 }
