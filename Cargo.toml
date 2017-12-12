@@ -17,3 +17,6 @@ bindgen = "0.31.3"
 
 [build-dependencies]
 libobliv-sys = { path = "libobliv-sys", version = "0.1.0" }
+
+[workspace]
+members = ["libobliv-sys", "test-oblivc"]
