@@ -79,7 +79,7 @@ impl From<NulError> for ConnectionError {
 pub struct ProtocolDesc {
     c: libobliv_sys::ProtocolDesc,
 }
-type ProtocolFn = unsafe extern "C" fn ( arg1 : * mut :: std :: os :: raw :: c_void );
+pub type ProtocolFn = unsafe extern "C" fn (arg: * mut c_void );
 impl ProtocolDesc {
     /// Returns a new [`ProtocolDesc`](#struct.ProtocolDesc)
     pub fn new() -> Self {
