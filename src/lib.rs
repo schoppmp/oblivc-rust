@@ -26,7 +26,8 @@ lazy_static! {
         env::split_paths(env!("DEP_OBLIV_INCLUDE")).collect();
 }
 
-// Returns a new `cc::Build` that uses `oblivcc` as compiler and includes all necessary headers
+/// Returns a new [`cc::Build`](../cc/struct.Build.html) that uses `oblivcc` as compiler and
+/// includes all headers needed to compile Obliv-C sources.
 pub fn compiler() -> cc::Build {
     let mut builder = cc::Build::new();
     OBLIVC_INCLUDE.iter().fold(
@@ -36,8 +37,8 @@ pub fn compiler() -> cc::Build {
     builder
 }
 
-// Returns a new `bindgen::Builder` that already includes all headers needed to generate
-// bindings for Obliv-C sources
+/// Returns a new [`bindgen::Builder`](../bindgen/struct.Builder.html) that includes all headers
+/// needed to generate Rust FFI bindings for Obliv-C sources.
 pub fn bindings() -> bindgen::Builder {
     bindgen::builder()
         .clang_args(OBLIVC_INCLUDE.iter().map(|p| format!("-I{}", p.display())))
@@ -45,14 +46,15 @@ pub fn bindings() -> bindgen::Builder {
 
 
 
-// Error returned by `ProtocolDesc::connect`, `ProtocolDesc::connect_loop` and
-// `ProtocolDesc::accept`
+/// Error returned by [`ProtocolDesc`](struct.ProtocolDesc.html) native Obliv-C connection methods.
 #[derive(Debug)]
-pub enum ConnectionError<'a> {
+pub enum ConnectionError {
+    /// Indicates that either host or port contained null bytes
     Nul(NulError),
-    Other(&'a str),
+    /// Used to indicate other errors, for example timeouts
+    Other(&'static str),
 }
-impl<'a> std::error::Error for ConnectionError<'a> {
+impl std::error::Error for ConnectionError {
     fn description(&self) -> &str {
         match self {
             &ConnectionError::Nul(ref e) => e.description(),
@@ -61,24 +63,25 @@ impl<'a> std::error::Error for ConnectionError<'a> {
         }
     }
 }
-impl<'a> fmt::Display for ConnectionError<'a> {
+impl fmt::Display for ConnectionError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.description())
     }
 }
-impl<'a> From<NulError> for ConnectionError<'a> {
+impl From<NulError> for ConnectionError {
     fn from(e: NulError) -> Self {
         ConnectionError::Nul(e)
     }
 }
 
-// Wraps the C ProtocolDesc struct
+/// Describes a protocol that can be executed via Obliv-C.
+/// Currently, only two-party Yao protocols are supported.
 pub struct ProtocolDesc {
     c: libobliv_sys::ProtocolDesc,
 }
 type ProtocolFn = unsafe extern "C" fn ( arg1 : * mut :: std :: os :: raw :: c_void );
 impl ProtocolDesc {
-    /// Returns a new ProtocolDesc
+    /// Returns a new [`ProtocolDesc`](#struct.ProtocolDesc)
     pub fn new() -> Self {
         ProtocolDesc{
             c: unsafe { mem::zeroed() },
@@ -102,8 +105,14 @@ impl ProtocolDesc {
         self
     }
 
-    // Accepts an incoming connection using Obliv-C's networking stack
-    pub fn accept<P: Into<Vec<u8>>>(mut self, port: P) -> Result<Self, ConnectionError<'static>> {
+    /// Accepts an incoming connection on `port` using Obliv-C's networking stack.
+    /// # Error
+    /// * If `port` contains a null byte, a
+    /// [`NulError`](https://doc.rust-lang.org/std/ffi/struct.NulError.html) is
+    /// returned.
+    /// * If the accept call fails, a
+    /// [`ConnectionError::Other`](enum.ConnectionError.html) is returned.
+    pub fn accept<P: Into<Vec<u8>>>(mut self, port: P) -> Result<Self, ConnectionError> {
         let port = CString::new(port)?;
         match unsafe {
              libobliv_sys::protocolAcceptTcp2P(&mut self.c, port.as_ptr())
@@ -116,13 +125,14 @@ impl ProtocolDesc {
     /// Tries to connect to `host:port` for `num_tries` times, waiting `sleep_time` between
     /// attempts. If `num_tries` is `None`, this function tries forever.
     /// # Errors
-    /// * If either `host` or `port` contain a null byte, a [`NulError`](https://doc.rust-lang.org/std/ffi/struct.NulError.html) is
+    /// * If either `host` or `port` contain a null byte, a
+    /// [`NulError`](https://doc.rust-lang.org/std/ffi/struct.NulError.html) is
     /// returned.
     /// * If no connection could be established after trying `num_tries` times, a
     /// [`ConnectionError::Other`](enum.ConnectionError.html) is returned.
     pub fn connect_loop<H: Into<Vec<u8>>, P: Into<Vec<u8>>>(mut self, host: H, port: P,
             sleep_time: Duration, num_tries: Option<usize>) ->
-            Result<Self, ConnectionError<'static>> {
+            Result<Self, ConnectionError> {
         let host = CString::new(host)?;
         let port = CString::new(port)?;
         unsafe {
@@ -152,7 +162,7 @@ impl ProtocolDesc {
     ///
     /// [con]: #method.connect
     pub fn connect<H: Into<Vec<u8>>, P: Into<Vec<u8>>>(self, host: H, port: P)
-            -> Result<Self, ConnectionError<'static>> {
+            -> Result<Self, ConnectionError> {
         self.connect_loop(host, port, Duration::from_millis(100), None)
     }
 
@@ -162,8 +172,23 @@ impl ProtocolDesc {
     ///
     /// [con]: #method.connect
     pub fn connect_once<H: Into<Vec<u8>>, P: Into<Vec<u8>>>(self, host: H, port: P)
-            -> Result<Self, ConnectionError<'static>> {
+            -> Result<Self, ConnectionError> {
         self.connect_loop(host, port, Duration::new(0,0), Some(1))
+    }
+
+    /// Uses `stream` for communication.
+    pub fn use_stream<'a, S: 'a + Read + Write>(mut self, stream: &mut S) -> Self {
+        let boxed_trans = Box::new(StreamProtocolTransport {
+            maxParties: 2,
+            split: None,
+            send: Some(StreamProtocolTransport::<'a, S>::send),
+            recv: Some(StreamProtocolTransport::<'a, S>::recv),
+            flush: Some(StreamProtocolTransport::<'a, S>::flush),
+            cleanup: Some(StreamProtocolTransport::<'a, S>::cleanup),
+            stream: stream,
+        });
+        self.c.trans = Box::into_raw(boxed_trans) as *mut ProtocolTransport;
+        self
     }
 
     /// Executes `f` with argument `arg` as a two-party Yao protocol
@@ -187,7 +212,7 @@ impl ProtocolDesc {
         libobliv_sys::execYaoProtocol(&mut self.c, Some(f), arg as *mut _ as *mut c_void);
     }
 }
-// Returns a new ProtocolDesc
+/// Alias for `ProtocolDesc::new()`
 pub fn protocol_desc() -> ProtocolDesc {
     ProtocolDesc::new()
 }
@@ -217,9 +242,6 @@ struct StreamProtocolTransport<'a, S: 'a + Read + Write> {
     pub stream: &'a mut S,
 }
 impl<'a, S: 'a + Read + Write> StreamProtocolTransport<'a, S> {
-    // unsafe extern "C" fn split(t: * mut ProtocolTransport) -> * mut ProtocolTransport {
-    //     t // TODO
-    // }
     unsafe extern "C" fn send(t: * mut ProtocolTransport, _party: c_int,
             data: *const c_void, len: usize) -> c_int {
         let stream = &mut ((*(t as *mut StreamProtocolTransport<'a, S>)).stream);
@@ -245,23 +267,6 @@ impl<'a, S: 'a + Read + Write> StreamProtocolTransport<'a, S> {
     }
     unsafe extern "C" fn cleanup(t: *mut ProtocolTransport) {
         Box::from_raw(t as *mut StreamProtocolTransport<'a, S>);
-    }
-}
-
-impl ProtocolDesc {
-    // Uses `stream` for communication
-    pub fn use_stream<'a, S: 'a + Read + Write>(mut self, stream: &mut S) -> Self {
-        let boxed_trans = Box::new(StreamProtocolTransport {
-            maxParties: 2,
-            split: None,
-            send: Some(StreamProtocolTransport::<'a, S>::send),
-            recv: Some(StreamProtocolTransport::<'a, S>::recv),
-            flush: Some(StreamProtocolTransport::<'a, S>::flush),
-            cleanup: Some(StreamProtocolTransport::<'a, S>::cleanup),
-            stream: stream,
-        });
-        self.c.trans = Box::into_raw(boxed_trans) as *mut ProtocolTransport;
-        self
     }
 }
 
