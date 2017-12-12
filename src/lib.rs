@@ -78,15 +78,24 @@ pub struct ProtocolDesc {
 }
 type ProtocolFn = unsafe extern "C" fn ( arg1 : * mut :: std :: os :: raw :: c_void );
 impl ProtocolDesc {
-    // Returns a new ProtocolDesc
+    /// Returns a new ProtocolDesc
     pub fn new() -> Self {
         ProtocolDesc{
             c: unsafe { mem::zeroed() },
         }
     }
 
-    // Sets the party id
-    pub fn party(&mut self, party: c_int) -> &mut Self {
+    /// Sets the party id of this [`ProtocolDesc`](#struct.ProtocolDesc).
+    /// # Panics
+    /// if `party` is not 1 or 2
+    /// # Examples
+    /// ```should_panic
+    /// let mut pd = oblivc::protocol_desc().party(0); // panics
+    /// ```
+    pub fn party(mut self, party: c_int) -> Self {
+        if party != 1 && party != 2 {
+            panic!("Party must be either 1 or 2");
+        }
         unsafe {
             libobliv_sys::setCurrentParty(&mut self.c, party);
         }
@@ -94,7 +103,7 @@ impl ProtocolDesc {
     }
 
     // Accepts an incoming connection using Obliv-C's networking stack
-    pub fn accept<P: Into<Vec<u8>>>(&mut self, port: P) -> Result<&mut Self, ConnectionError> {
+    pub fn accept<P: Into<Vec<u8>>>(mut self, port: P) -> Result<Self, ConnectionError<'static>> {
         let port = CString::new(port)?;
         match unsafe {
              libobliv_sys::protocolAcceptTcp2P(&mut self.c, port.as_ptr())
@@ -104,14 +113,18 @@ impl ProtocolDesc {
        }
     }
 
-    // Tries to connect to `host:port` for `num_tries` times, waiting `sleep_time` between
-    // attempts
-    pub fn connect_loop<H: Into<Vec<u8>>, P: Into<Vec<u8>>>(&mut self, host: H, port: P,
-            sleep_time: Option<Duration>, num_tries: Option<usize>) ->
-            Result<&mut Self, ConnectionError> {
+    /// Tries to connect to `host:port` for `num_tries` times, waiting `sleep_time` between
+    /// attempts. If `num_tries` is `None`, this function tries forever.
+    /// # Errors
+    /// * If either `host` or `port` contain a null byte, a [`NulError`](https://doc.rust-lang.org/std/ffi/struct.NulError.html) is
+    /// returned.
+    /// * If no connection could be established after trying `num_tries` times, a
+    /// [`ConnectionError::Other`](enum.ConnectionError.html) is returned.
+    pub fn connect_loop<H: Into<Vec<u8>>, P: Into<Vec<u8>>>(mut self, host: H, port: P,
+            sleep_time: Duration, num_tries: Option<usize>) ->
+            Result<Self, ConnectionError<'static>> {
         let host = CString::new(host)?;
         let port = CString::new(port)?;
-        let sleep_time = sleep_time.unwrap_or(Duration::from_millis(100));
         unsafe {
             for i in 0.. {
                 let status = libobliv_sys::protocolConnectTcp2P(
@@ -133,30 +146,45 @@ impl ProtocolDesc {
         Err(ConnectionError::Other("Connection attempt failed"))
     }
 
-    // Tries to connect to `host:port` in an infinite loop
-    pub fn connect<H: Into<Vec<u8>>, P: Into<Vec<u8>>>(&mut self, host: H, port: P)
-            -> Result<&mut Self, ConnectionError> {
-        self.connect_loop(host, port, None, None)
+    /// Tries to connect to `host:port` in an infinite loop, waiting 100ms between attempts.
+    /// # Errors
+    /// See [`connect_loop`][con]
+    ///
+    /// [con]: #method.connect
+    pub fn connect<H: Into<Vec<u8>>, P: Into<Vec<u8>>>(self, host: H, port: P)
+            -> Result<Self, ConnectionError<'static>> {
+        self.connect_loop(host, port, Duration::from_millis(100), None)
     }
 
-    // Tries to connect to `host:port` once
-    pub fn connect_once<H: Into<Vec<u8>>, P: Into<Vec<u8>>>(&mut self, host: H, port: P)
-            -> Result<&mut Self, ConnectionError> {
-        self.connect_loop(host, port, None, Some(1))
+    /// Tries to connect to `host:port` once.
+    /// # Errors
+    /// See [`connect_loop`][con]
+    ///
+    /// [con]: #method.connect
+    pub fn connect_once<H: Into<Vec<u8>>, P: Into<Vec<u8>>>(self, host: H, port: P)
+            -> Result<Self, ConnectionError<'static>> {
+        self.connect_loop(host, port, Duration::new(0,0), Some(1))
     }
 
-    // Executes `f` with argument `arg` as a two-party Yao protocol
-    // Panics if not connected or party not set
-    pub fn exec_yao_protocol<Arg>(&mut self, f: ProtocolFn, arg: &mut Arg) {
+    /// Executes `f` with argument `arg` as a two-party Yao protocol
+    ///
+    /// # Panics
+    /// * if not connected either via `connect`, `connect_loop`, `connect_once`, `accept`,
+    /// or `use_stream`
+    /// * if `party` was not called
+    ///
+    /// # Safety
+    /// This function is unsafe, since calling arbitrary Obliv-C functions with arbitrary arguments
+    /// may lead to undefined behavior. It is the caller's responsibility to ensure that the
+    /// arguments match the function being executed and that `f` is safe.
+    pub unsafe fn exec_yao_protocol<Arg>(mut self, f: ProtocolFn, arg: &mut Arg) {
         if self.c.thisParty == 0 {
             panic!("Party must be set before calling `exec_yao_protocol`");
         }
         if self.c.trans == std::ptr::null_mut() {
             panic!("Connection must be established before calling `exec_yao_protocol`");
         }
-        unsafe {
-            libobliv_sys::execYaoProtocol(&mut self.c, Some(f), arg as *mut _ as *mut c_void);
-        }
+        libobliv_sys::execYaoProtocol(&mut self.c, Some(f), arg as *mut _ as *mut c_void);
     }
 }
 // Returns a new ProtocolDesc
@@ -222,7 +250,7 @@ impl<'a, S: 'a + Read + Write> StreamProtocolTransport<'a, S> {
 
 impl ProtocolDesc {
     // Uses `stream` for communication
-    pub fn use_stream<'a, S: 'a + Read + Write>(&mut self, stream: &mut S) -> &mut Self {
+    pub fn use_stream<'a, S: 'a + Read + Write>(mut self, stream: &mut S) -> Self {
         let boxed_trans = Box::new(StreamProtocolTransport {
             maxParties: 2,
             split: None,
@@ -242,11 +270,11 @@ impl ProtocolDesc {
 mod tests {
     use super::*;
     #[test]
-    fn new_compiler() {
+    fn test_new_compiler() {
         let _ = compiler();
     }
     #[test]
-    fn new_bindings() {
+    fn test_new_bindings() {
         let _ = bindings();
     }
 }

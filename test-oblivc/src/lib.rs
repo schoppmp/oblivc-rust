@@ -18,20 +18,20 @@ mod tests {
                 input: 10,
                 output: 0,
             };
-            oblivc::protocol_desc()
+            let pd = oblivc::protocol_desc()
                 .party(1)
-                .accept("56734").unwrap()
-                .exec_yao_protocol(millionaire, &mut args);
+                .accept("56734").unwrap();
+            unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
         });
         // run client (party 2) in main thread
         let mut args = millionaire_args {
             input: 20,
             output: 0,
         };
-        oblivc::protocol_desc()
+        let pd = oblivc::protocol_desc()
             .party(2)
-            .connect("localhost", "56734").unwrap()
-            .exec_yao_protocol(millionaire, &mut args);
+            .connect("localhost", "56734").unwrap();
+        unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
         // wait for server to finish
         server.join().unwrap();
         // party 1 < party 2
@@ -48,16 +48,16 @@ mod tests {
             let listener = TcpListener::bind("0.0.0.0:56735").unwrap();
             let (mut stream, _) = listener.accept().unwrap();
             stream.set_nodelay(true).unwrap();
-            oblivc::protocol_desc()
+            let pd = oblivc::protocol_desc()
                 .use_stream(&mut stream)
-                .party(1)
-                .exec_yao_protocol(millionaire, &mut args);
+                .party(1);
+            unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
             stream.read_exact(&mut [0; 4]).unwrap();
             // run again with roles reversed
-            oblivc::protocol_desc()
-                .party(2)
+            let pd = oblivc::protocol_desc()
                 .use_stream(&mut stream)
-                .exec_yao_protocol(millionaire, &mut args);
+                .party(2);
+            unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
         });
         let mut args = millionaire_args {
             input: 20,
@@ -68,18 +68,18 @@ mod tests {
             Err(_) => thread::sleep(std::time::Duration::from_millis(100)),
         }}}}();
         stream.set_nodelay(true).unwrap();
-        oblivc::protocol_desc()
+        let pd = oblivc::protocol_desc()
             .party(2)
-            .use_stream(&mut stream)
-            .exec_yao_protocol(millionaire, &mut args);
+            .use_stream(&mut stream);
+        unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
         assert!(args.output == -1);
         // we can use the same stream outside obliv-c
         stream.write_all(b"blah").unwrap();
         // use it for obliv-c again
-        oblivc::protocol_desc()
+        let pd = oblivc::protocol_desc()
             .party(1)
-            .use_stream(&mut stream)
-            .exec_yao_protocol(millionaire, &mut args);
+            .use_stream(&mut stream);
+        unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
         assert!(args.output == 1);
         server.join().unwrap();
     }
@@ -91,8 +91,8 @@ mod tests {
             input: 0,
             output: 0,
         };
-        oblivc::protocol_desc()
-            .exec_yao_protocol(millionaire, &mut args);
+        let pd = oblivc::protocol_desc();
+        unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
     }
 
     #[test]
@@ -102,8 +102,7 @@ mod tests {
             input: 0,
             output: 0,
         };
-        oblivc::protocol_desc()
-            .party(1)
-            .exec_yao_protocol(millionaire, &mut args);
+        let pd = oblivc::protocol_desc().party(1);
+        unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
     }
 }
