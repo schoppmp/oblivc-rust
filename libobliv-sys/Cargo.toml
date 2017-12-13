@@ -8,6 +8,7 @@ repository = "https://github.com/schoppmp/oblivc-rust"
 homepage = "https://github.com/schoppmp/oblivc-rust"
 categories = ["external-ffi-bindings"]
 links = "obliv"
+exclude = ["obliv-c/web/*"]
 
 [lib]
 name = "libobliv_sys"
