@@ -1,3 +1,4 @@
+#![doc(html_root_url = "https://schoppmp.github.io/doc/oblivc-rust/")]
 extern crate libobliv_sys;
 #[macro_use]
 extern crate lazy_static;

@@ -1,4 +1,4 @@
-#![doc(html_root_url = "https://docs.rs/crate/oblivc/")]
+#![doc(html_root_url = "https://schoppmp.github.io/doc/oblivc-rust/")]
 #![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]

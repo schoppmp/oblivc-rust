@@ -1,11 +1,12 @@
 [package]
 name = "libobliv-sys"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
 description = "Raw bindings for Obliv-C"
 license = "AGPL-3.0"
 repository = "https://github.com/schoppmp/oblivc-rust"
 homepage = "https://github.com/schoppmp/oblivc-rust"
+documentation = "https://schoppmp.github.io/doc/oblivc-rust/libobliv_sys/"
 categories = ["external-ffi-bindings"]
 links = "obliv"
 exclude = ["obliv-c/web/*", "obliv-c/_build/*"]
@@ -24,3 +25,6 @@ libgpg-error-sys = { version = "0.2.3", default-features = false }
 walkdir = "2"
 bindgen = "0.31.3"
 cc = "1.0"
+
+[badges]
+travis-ci = { repository = "schoppmp/oblivc-rust" }
