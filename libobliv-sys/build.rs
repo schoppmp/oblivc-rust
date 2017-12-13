@@ -30,14 +30,11 @@ fn main() {
         t!(env::current_dir()).join(oblivc_path)
     };
 
-    // update submodule
+    // update submodule, but ignore if that fails
     if !oblivc_path.join(".git").exists() {
-        let status = t!(Command::new("git")
+        let _status = Command::new("git")
             .args(&["submodule", "update", "--init"])
-            .status());
-        if !status.success() {
-            panic!("Updating submodules failed");
-        };
+            .status();
     }
 
     // build obliv-c

@@ -10,13 +10,13 @@ homepage = "https://github.com/schoppmp/oblivc-rust"
 categories = ["api-bindings"]
 
 [dependencies]
-libobliv-sys = { path = "libobliv-sys", version = "0.1.1" }
+libobliv-sys = { path = "libobliv-sys", version = "0.1.2" }
 cc = "1.0"
 lazy_static = "1.0.0"
 bindgen = "0.31.3"
 
 [build-dependencies]
-libobliv-sys = { path = "libobliv-sys", version = "0.1.1" }
+libobliv-sys = { path = "libobliv-sys", version = "0.1.2" }
 
 [workspace]
 members = ["libobliv-sys", "test-oblivc"]

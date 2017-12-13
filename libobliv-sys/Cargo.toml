@@ -1,6 +1,6 @@
 [package]
 name = "libobliv-sys"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
 description = "Raw bindings for Obliv-C"
 license = "AGPL-3.0"
@@ -8,7 +8,7 @@ repository = "https://github.com/schoppmp/oblivc-rust"
 homepage = "https://github.com/schoppmp/oblivc-rust"
 categories = ["external-ffi-bindings"]
 links = "obliv"
-exclude = ["obliv-c/web/*"]
+exclude = ["obliv-c/web/*", "obliv-c/_build/*"]
 
 [lib]
 name = "libobliv_sys"
