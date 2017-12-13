@@ -21,17 +21,7 @@ fn main() {
     });
     let oblivc_path = match oblivc_path_env {
         Some(s) => PathBuf::from(s),
-        None => {
-            // update submodule
-            if !Path::new("obliv-c/.git").exists() {
-                let status = t!(Command::new("git").args(&["submodule", "update", "--init"])
-                                     .status());
-                if !status.success() {
-                    panic!("Updating submodules failed");
-                };
-            }
-            PathBuf::from("obliv-c")
-        },
+        None => PathBuf::from("obliv-c"),
     };
     // make oblivc_path absolute
     let oblivc_path = if oblivc_path.is_absolute() {
@@ -39,6 +29,16 @@ fn main() {
     } else {
         t!(env::current_dir()).join(oblivc_path)
     };
+
+    // update submodule
+    if !oblivc_path.join(".git").exists() {
+        let status = t!(Command::new("git")
+            .args(&["submodule", "update", "--init"])
+            .status());
+        if !status.success() {
+            panic!("Updating submodules failed");
+        };
+    }
 
     // build obliv-c
     if !oblivc_path.join("Makefile").exists() {
@@ -51,16 +51,18 @@ fn main() {
     if !status.success() {
         panic!("Building Obliv-C failed");
     }
-    // link oblivcc and libobliv.a to OUT_DIR
+
     let oblivc_src_path = oblivc_path.join("src");
     let oblivc_bin_path = oblivc_path.join("bin");
     let oblivc_libobliv_path = oblivc_path.join("_build/libobliv.a");
     let out_path = PathBuf::from(t!(env::var("OUT_DIR")));
     let out_libobliv_path = out_path.join("libobliv.a");
     let out_bin_path = out_path.join("bin");
+
     // delete previous symlinks, ignoring errors
     let _ = std::fs::remove_file(&out_libobliv_path);
     let _ = std::fs::remove_file(&out_bin_path);
+    // link oblivcc and libobliv.a to OUT_DIR
     t!(std::os::unix::fs::symlink(&oblivc_libobliv_path, &out_libobliv_path));
     t!(std::os::unix::fs::symlink(&oblivc_bin_path, &out_bin_path));
 
@@ -69,7 +71,7 @@ fn main() {
     println!("cargo:rustc-link-search=native={}", out_path.display());
     println!("cargo:rustc-link-lib=static=obliv");
 
-    // register to rebuild when something changes
+    // register to rebuild when Obliv-C sources change
     let register_dir_rebuild = |dir: &AsRef<Path>| {
         for file in WalkDir::new(dir)
                             .into_iter()
