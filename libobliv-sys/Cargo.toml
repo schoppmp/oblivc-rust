@@ -15,12 +15,12 @@ name = "libobliv_sys"
 path = "src/lib.rs"
 
 [dependencies]
-libgcrypt-sys = "0.5.4"
-libgpg-error-sys = "0.2.3"
+libgcrypt-sys = { version = "0.5.4", default-features = false }
+libgpg-error-sys = { version = "0.2.3", default-features = false }
 
 [build-dependencies]
-libgcrypt-sys = "0.5.4"
-libgpg-error-sys = "0.2.3"
+libgcrypt-sys = { version = "0.5.4", default-features = false }
+libgpg-error-sys = { version = "0.2.3", default-features = false }
 walkdir = "2"
 bindgen = "0.31.3"
 cc = "1.0"
