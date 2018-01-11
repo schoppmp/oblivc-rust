@@ -1,4 +1,19 @@
+//! # Obliv-C bindings for Rust
+//! [Obliv-C](https://github.com/samee/obliv-c) is a language for expressing Multi-Party
+//! Computation protocols as C-like programs.
+//! This wrapper allows to develop Rust programs that call Obliv-C protocols.
+//!
+//! If an Obliv-C installation is passed via the `OBLIVC_PATH` environment
+//! variable at build time, that installation is used.
+//! Otherwise, Obliv-C is built from source.
+//!
+//! A small example using this library can be found
+//! [here](https://github.com/schoppmp/oblivc-rust/tree/master/test-oblivc).
+
+// TODO: extend documentation
+
 #![doc(html_root_url = "https://schoppmp.github.io/doc/oblivc-rust/")]
+
 extern crate libobliv_sys;
 #[macro_use]
 extern crate lazy_static;
@@ -77,6 +92,14 @@ impl From<NulError> for ConnectionError {
 
 /// Describes a protocol that can be executed via Obliv-C.
 /// Currently, only two-party Yao protocols are supported.
+///
+/// Apart from native TCP sockets created via
+/// [`accept`](#method.accept) or
+/// [`connect`](#method.connect), applications can use
+/// anything that implements
+/// [`Read`](https://doc.rust-lang.org/nightly/std/io/trait.Read.html) and
+/// [`Write`](https://doc.rust-lang.org/nightly/std/io/trait.Write.html) for communication by
+/// calling [`use_stream`](#method.use_stream).
 pub struct ProtocolDesc {
     c: libobliv_sys::ProtocolDesc,
 }
@@ -195,14 +218,21 @@ impl ProtocolDesc {
     /// Executes `f` with argument `arg` as a two-party Yao protocol
     ///
     /// # Panics
-    /// * if not connected either via `connect`, `connect_loop`, `connect_once`, `accept`,
-    /// or `use_stream`
-    /// * if `party` was not called
+    /// * if not connected either via [`connect`][connect], [`connect_loop`][connect_loop],
+    /// [`connect_once`][connect_once], [`accept`][accept], or [`use_stream`][use_stream]
+    /// * if [`party`][party] was not called
     ///
     /// # Safety
     /// This function is unsafe, since calling arbitrary Obliv-C functions with arbitrary arguments
     /// may lead to undefined behavior. It is the caller's responsibility to ensure that the
     /// arguments match the function being executed and that `f` is safe.
+    ///
+    /// [connect]: #method.connect
+    /// [connect_loop]: #method.connect_loop
+    /// [connect_once]: #method.connect_once
+    /// [accept]: #method.accept
+    /// [use_stream]: #method.use_stream
+    /// [party]: #method.party
     pub unsafe fn exec_yao_protocol<Arg>(mut self, f: ProtocolFn, arg: &mut Arg) {
         if self.c.thisParty == 0 {
             panic!("Party must be set before calling `exec_yao_protocol`");
