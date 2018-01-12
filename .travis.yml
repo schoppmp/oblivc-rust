@@ -12,6 +12,11 @@ before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y ocaml libgcrypt20-dev ocaml-findlib
 
+before_script:
+  # Make sure stdout is in blocking mode. Otherwise builds will fail due to large writes to stdout
+  # See: https://github.com/travis-ci/travis-ci/issues/4704. If this gets fixed, this line can be removed.
+  - python3 -c 'import os,sys,fcntl; flags = fcntl.fcntl(sys.stdout, fcntl.F_GETFL); fcntl.fcntl(sys.stdout, fcntl.F_SETFL, flags&~os.O_NONBLOCK);'
+
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all
