@@ -12,6 +12,8 @@ variable at build time, that installation is used.
 Otherwise, Obliv-C is built from source.
 
 For information on how to use this library, have a look at the
-[documentation](https://schoppmp.github.io/doc/oblivc-rust/oblivc/) and the
-small example in
-[`test-oblivc`](https://github.com/schoppmp/oblivc-rust/tree/master/test-oblivc).
+[crate documentation](https://schoppmp.github.io/doc/oblivc-rust/oblivc/), 
+as well as the examples in
+[`test-oblivc`](https://github.com/schoppmp/oblivc-rust/tree/master/test-oblivc)
+and
+[their documentation](https://schoppmp.github.io/doc/oblivc-rust/test_oblivc).
