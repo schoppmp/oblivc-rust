@@ -11,6 +11,10 @@ matrix:
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y ocaml libgcrypt20-dev ocaml-findlib
+  # install rustfmt-nightly (needed by bindgen to correctly format generated sources)
+  - rustup install nightly
+  - rustup run nightly cargo install rustfmt-nightly --force
+  - rustup run nightly rustfmt --version
 
 before_script:
   # Make sure stdout is in blocking mode. Otherwise builds will fail due to large writes to stdout
