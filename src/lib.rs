@@ -8,7 +8,7 @@
 //! Otherwise, Obliv-C is built from source.
 //!
 //! A small example using this library can be found
-//! [here](https://github.com/schoppmp/oblivc-rust/tree/master/test-oblivc).
+//! [here](https://schoppmp.github.io/doc/oblivc-rust/test_oblivc/index.html).
 
 // TODO: extend documentation
 
