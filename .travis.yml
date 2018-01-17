@@ -20,6 +20,6 @@ before_script:
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all
-  - cargo doc
+  - cargo doc --all
 
 after_success: curl https://raw.githubusercontent.com/schoppmp/travis-doc-upload/master/travis-doc-upload.sh | sh
