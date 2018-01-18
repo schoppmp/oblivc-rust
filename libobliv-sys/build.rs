@@ -67,7 +67,7 @@ fn main() {
     t!(std::os::unix::fs::symlink(&oblivc_bin_path, &out_bin_path));
 
     // tell cargo to tell rustc to link libobliv.a
-    println!("cargo:root={}", out_path.display());
+    println!("cargo:root={}", oblivc_path.display());
     println!("cargo:rustc-link-search=native={}", out_path.display());
     println!("cargo:rustc-link-lib=static=obliv");
 
