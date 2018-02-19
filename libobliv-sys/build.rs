@@ -46,7 +46,7 @@ fn main() {
     }
     let status = t!(Command::new("make")
         .current_dir(&oblivc_path)
-        .arg("CFLAGS=-fPIC")
+        .env("CFLAGS", "-fPIC -std=c99")
         .status());
     if !status.success() {
         panic!("Building Obliv-C failed");

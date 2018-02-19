@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
 
 [dependencies]
-oblivc = { path = "..", version = "0.1.1" }
+oblivc = { path = "..", version = "0.1.2" }
 
 [build-dependencies]
-oblivc = { path = "..", version = "0.1.1" }
+oblivc = { path = "..", version = "0.1.2" }
