@@ -1,6 +1,6 @@
 [package]
 name = "oblivc"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
 description = "Wrapper for Obliv-C"
 license = "AGPL-3.0"
@@ -11,13 +11,13 @@ documentation = "https://schoppmp.github.io/doc/oblivc-rust/oblivc/"
 categories = ["api-bindings"]
 
 [dependencies]
-libobliv-sys = { path = "libobliv-sys", version = "0.1.3" }
+libobliv-sys = { path = "libobliv-sys", version = "0.1.5" }
 cc = "1.0"
 lazy_static = "1.0.0"
 bindgen = "0.31.3"
 
 [build-dependencies]
-libobliv-sys = { path = "libobliv-sys", version = "0.1.3" }
+libobliv-sys = { path = "libobliv-sys", version = "0.1.5" }
 
 [workspace]
 members = ["libobliv-sys", "test-oblivc"]
