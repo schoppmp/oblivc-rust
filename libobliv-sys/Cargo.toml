@@ -1,6 +1,6 @@
 [package]
 name = "libobliv-sys"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Phillipp Schoppmann <schoppmann@informatik.hu-berlin.de>"]
 description = "Raw bindings for Obliv-C"
 license = "AGPL-3.0"
