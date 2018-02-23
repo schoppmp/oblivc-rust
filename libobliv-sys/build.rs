@@ -47,6 +47,7 @@ fn main() {
     let status = t!(Command::new("make")
         .current_dir(&oblivc_path)
         .arg("CFLAGS=-fPIC -std=gnu99 -O3")
+        .arg("CC=clang") // workaround for https://github.com/samee/obliv-c/issues/38
         .status());
     if !status.success() {
         panic!("Building Obliv-C failed");
