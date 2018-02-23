@@ -137,7 +137,12 @@ fn main() {
 
     // Compile tests
     include_paths.iter().fold(
-            cc::Build::new().compiler(out_bin_path.join("oblivcc")),
+            cc::Build::new()
+                .compiler(out_bin_path.join("oblivcc"))
+                 // silence compiler warnings regarding gcrypt
+                .flag_if_supported("-Wno-unused-parameter")
+                .flag_if_supported("-Wno-unused-function")
+                .flag_if_supported("-Wno-unused-const-variable"),
             |builder, path| builder.include(path)
         )
         .file("src/test_oblivc.oc")
