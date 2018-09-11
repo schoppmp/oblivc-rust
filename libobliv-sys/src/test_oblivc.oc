@@ -8,8 +8,8 @@ typedef struct {
 
 void millionaire(void *vargs) {
   millionaire_args *args = vargs;
-  obliv long in1 = feedOblivInt(args->input, 1);
-  obliv long in2 = feedOblivInt(args->input, 2);
+  obliv int in1 = feedOblivInt(args->input, 1);
+  obliv int in2 = feedOblivInt(args->input, 2);
   obliv char out = -1;
   obliv if(in1 > in2) {
     out = 1;

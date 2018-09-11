@@ -37,14 +37,14 @@ mod test {
                         output: 0i8,
                     };
                     let host = CString::new("localhost").unwrap();
-                    let port = CString::new("45623").unwrap();
+                    let port = CString::new("34512").unwrap();
                     unsafe {
-                        // allocate an uninitialized ProtocolDesc
-                        let mut pd: ProtocolDesc = std::mem::uninitialized();
+                        // allocate a ProtocolDesc
+                        let mut pd: ProtocolDesc = std::mem::zeroed();
                         // connect
                         setCurrentParty(&mut pd, party);
                         if party == 1 {
-                            protocolAcceptTcp2P(&mut pd, port.as_ptr());
+                            assert_eq!(protocolAcceptTcp2P(&mut pd, port.as_ptr()), 0);
                         } else {
                             while protocolConnectTcp2P(&mut pd, host.as_ptr(), port.as_ptr()) != 0 {
                                 thread::sleep(Duration::from_millis(100));
@@ -58,7 +58,7 @@ mod test {
                         );
                         cleanupProtocol(&mut pd);
                     }
-                    // party 1 input < party 2 input>
+                    // party 1 input < party 2 input
                     assert!(args.output < 0);
                 })
             })
