@@ -1,10 +1,10 @@
-extern crate walkdir;
 extern crate bindgen;
 extern crate cc;
+extern crate walkdir;
 
-use std::process::Command;
-use std::path::{Path,PathBuf};
 use std::env;
+use std::process::Command;
+use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
 macro_rules! t {
@@ -16,9 +16,10 @@ macro_rules! t {
 
 fn main() {
     // check for OBLIVC_PATH
-    let oblivc_path_env = env::var("OBLIVC_PATH").ok().and_then(|s| {
-        if s == "" {None} else {Some(s)}
-    });
+    let oblivc_path_env =
+        env::var("OBLIVC_PATH")
+            .ok()
+            .and_then(|s| if s == "" { None } else { Some(s) });
     let oblivc_path = match oblivc_path_env {
         Some(s) => PathBuf::from(s),
         None => PathBuf::from("obliv-c"),
@@ -38,18 +39,24 @@ fn main() {
     }
 
     // build obliv-c
+    // TODO(schoppmp): Find a nicer way to pass OPAM environment to configure and make.
     if !oblivc_path.join("Makefile").exists() {
-        let status = t!(Command::new("./configure").current_dir(&oblivc_path).status());
+        let status = t!(Command::new("sh")
+            .arg("-c")
+            .arg("eval `opam config env` && ./configure")
+            .current_dir(&oblivc_path)
+            .status());
         if !status.success() {
             panic!("Configuring Obliv-C failed");
         }
     }
-    let status = t!(Command::new("make")
+    let status = t!(Command::new("sh")
+        .arg("-c")
+        .arg("eval `opam config env` && make CFLAGS=\"-fPIC -std=gnu99 -O3\"")
         .current_dir(&oblivc_path)
-        .arg("CFLAGS=-fPIC -std=gnu99 -O3")
         .status());
     if !status.success() {
-        panic!("Building Obliv-C failed");
+        panic!("Building Obliv-C failed; PATH={}", env!("PATH"));
     }
 
     let oblivc_src_path = oblivc_path.join("src");
@@ -63,7 +70,10 @@ fn main() {
     let _ = std::fs::remove_file(&out_libobliv_path);
     let _ = std::fs::remove_file(&out_bin_path);
     // link oblivcc and libobliv.a to OUT_DIR
-    t!(std::os::unix::fs::symlink(&oblivc_libobliv_path, &out_libobliv_path));
+    t!(std::os::unix::fs::symlink(
+        &oblivc_libobliv_path,
+        &out_libobliv_path
+    ));
     t!(std::os::unix::fs::symlink(&oblivc_bin_path, &out_bin_path));
 
     // tell cargo to tell rustc to link libobliv.a
@@ -73,9 +83,7 @@ fn main() {
 
     // register to rebuild when Obliv-C sources change
     let register_dir_rebuild = |dir: &AsRef<Path>| {
-        for file in WalkDir::new(dir)
-                            .into_iter()
-                            .filter_map(|e| e.ok()) {
+        for file in WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
             println!("cargo:rerun-if-changed={}", file.path().display());
         }
     };
@@ -92,7 +100,10 @@ fn main() {
         PathBuf::from(t!(env::var("DEP_GCRYPT_ROOT"))).join("include"),
         PathBuf::from(t!(env::var("DEP_GPG_ERROR_ROOT"))).join("include"),
     ];
-    println!("cargo:include={}", t!(env::join_paths(&include_paths)).to_str().unwrap());
+    println!(
+        "cargo:include={}",
+        t!(env::join_paths(&include_paths)).to_str().unwrap()
+    );
 
     // all functions in "obliv.h", but not in included headers
     let bind_functions = vec![
@@ -120,10 +131,12 @@ fn main() {
     ];
 
     // generate bindings
-    let bindings = bind_functions.iter().fold(
+    let bindings = bind_functions
+        .iter()
+        .fold(
             bindgen::Builder::default()
                 .header(oblivc_path.join("src/ext/oblivc/obliv.h").to_str().unwrap()),
-            |builder, func| builder.whitelist_function(func)
+            |builder, func| builder.whitelist_function(func),
         )
         .clang_args(include_paths.iter().map(|p| format!("-I{}", p.display())))
         .generate()
@@ -135,9 +148,11 @@ fn main() {
         .expect("Couldn't write bindings");
 
     // Compile tests
-    include_paths.iter().fold(
+    include_paths
+        .iter()
+        .fold(
             cc::Build::new().compiler(out_bin_path.join("oblivcc")),
-            |builder, path| builder.include(path)
+            |builder, path| builder.include(path),
         )
         .file("src/test_oblivc.oc")
         .compile("libtest_oblivc.a")
