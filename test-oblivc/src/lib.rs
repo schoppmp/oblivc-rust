@@ -83,7 +83,7 @@
 //! # };
 //! # let pd = oblivc::protocol_desc()
 //! #     .party(1)
-//! #     .accept("56734").unwrap();
+//! #     .accept("67845").unwrap();
 //! #    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
 //! # });
 //! let mut args = millionaire_args {
@@ -92,7 +92,7 @@
 //! };
 //! let pd = oblivc::protocol_desc()
 //!     .party(2)
-//!     .connect("localhost", "56734").unwrap();
+//!     .connect("localhost", "67845").unwrap();
 //! # unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
 //! # server.join().unwrap();
 //! # assert!(args.output == -1);
@@ -112,7 +112,7 @@
 //! # };
 //! # let pd = oblivc::protocol_desc()
 //! #     .party(1)
-//! #     .accept("56734").unwrap();
+//! #     .accept("78956").unwrap();
 //! #    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
 //! # });
 //! # let mut args = millionaire_args {
@@ -121,7 +121,7 @@
 //! # };
 //! # let pd = oblivc::protocol_desc()
 //! #     .party(2)
-//! #     .connect("localhost", "56734").unwrap();
+//! #     .connect("localhost", "78956").unwrap();
 //! unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
 //! # server.join().unwrap();
 //! # assert!(args.output == -1);
