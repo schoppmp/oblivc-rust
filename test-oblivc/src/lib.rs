@@ -171,7 +171,9 @@ mod tests {
             output: 0,
         };
         let pd = oblivc::protocol_desc();
-        unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+        unsafe {
+            pd.exec_yao_protocol(millionaire, &mut args);
+        }
     }
 
     #[test]
@@ -182,6 +184,8 @@ mod tests {
             output: 0,
         };
         let pd = oblivc::protocol_desc().party(1);
-        unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+        unsafe {
+            pd.exec_yao_protocol(millionaire, &mut args);
+        }
     }
 }

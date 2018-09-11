@@ -3,7 +3,7 @@
 extern crate oblivc;
 extern crate test_oblivc;
 
-use test_oblivc::{millionaire,millionaire_args};
+use test_oblivc::{millionaire, millionaire_args};
 use std::thread;
 use std::os::unix::net::UnixStream;
 
@@ -12,10 +12,10 @@ fn run_server(mut stream: UnixStream) {
         input: 10,
         output: 0,
     };
-    let pd = oblivc::protocol_desc()
-        .party(1)
-        .use_stream(&mut stream);
-    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+    let pd = oblivc::protocol_desc().party(1).use_stream(&mut stream);
+    unsafe {
+        pd.exec_yao_protocol(millionaire, &mut args);
+    }
 }
 
 fn run_client(mut stream: UnixStream) {
@@ -23,10 +23,10 @@ fn run_client(mut stream: UnixStream) {
         input: 20,
         output: 0,
     };
-    let pd = oblivc::protocol_desc()
-        .party(2)
-        .use_stream(&mut stream);
-    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+    let pd = oblivc::protocol_desc().party(2).use_stream(&mut stream);
+    unsafe {
+        pd.exec_yao_protocol(millionaire, &mut args);
+    }
     // party 1 < party 2
     assert!(args.output == -1);
 }

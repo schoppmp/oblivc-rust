@@ -1,10 +1,10 @@
 extern crate oblivc;
 extern crate test_oblivc;
 
-use test_oblivc::{millionaire,millionaire_args};
+use test_oblivc::{millionaire, millionaire_args};
 use std::thread;
-use std::net::{TcpListener,TcpStream};
-use std::io::{Read,Write};
+use std::net::{TcpListener, TcpStream};
+use std::io::{Read, Write};
 
 fn run_server() {
     let mut args = millionaire_args {
@@ -15,19 +15,19 @@ fn run_server() {
     let listener = TcpListener::bind("0.0.0.0:56735").unwrap();
     let (mut stream, _) = listener.accept().unwrap();
     // Use this connection for our ProtocolDesc
-    let pd = oblivc::protocol_desc()
-        .use_stream(&mut stream)
-        .party(1);
-    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+    let pd = oblivc::protocol_desc().use_stream(&mut stream).party(1);
+    unsafe {
+        pd.exec_yao_protocol(millionaire, &mut args);
+    }
 
     // Read non-oblivc data sent by the client
     stream.read_exact(&mut [0; 4]).unwrap();
 
     // run again with roles reversed
-    let pd = oblivc::protocol_desc()
-        .use_stream(&mut stream)
-        .party(2);
-    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+    let pd = oblivc::protocol_desc().use_stream(&mut stream).party(2);
+    unsafe {
+        pd.exec_yao_protocol(millionaire, &mut args);
+    }
 }
 
 fn run_client() {
@@ -36,27 +36,30 @@ fn run_client() {
         output: 0,
     };
     // try connecting until successful
-    let mut stream = (0..).filter_map(|_| {
-        TcpStream::connect("localhost:56735").ok().or_else(|| {
-            thread::sleep(std::time::Duration::from_millis(100));
-            None
+    let mut stream = (0..)
+        .filter_map(|_| {
+            TcpStream::connect("localhost:56735").ok().or_else(|| {
+                thread::sleep(std::time::Duration::from_millis(100));
+                None
+            })
         })
-    }).next().unwrap();
+        .next()
+        .unwrap();
     // use the connection once established
-    let pd = oblivc::protocol_desc()
-        .party(2)
-        .use_stream(&mut stream);
-    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+    let pd = oblivc::protocol_desc().party(2).use_stream(&mut stream);
+    unsafe {
+        pd.exec_yao_protocol(millionaire, &mut args);
+    }
     assert!(args.output == -1);
 
     // we can use the same stream outside obliv-c!
     stream.write_all(b"blah").unwrap();
 
     // use it for obliv-c again
-    let pd = oblivc::protocol_desc()
-        .party(1)
-        .use_stream(&mut stream);
-    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+    let pd = oblivc::protocol_desc().party(1).use_stream(&mut stream);
+    unsafe {
+        pd.exec_yao_protocol(millionaire, &mut args);
+    }
     assert!(args.output == 1);
 }
 

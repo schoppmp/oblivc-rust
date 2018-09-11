@@ -16,8 +16,10 @@ fn main() {
     // write them to `OUT_DIR/millionaire.rs`.
     oblivc::bindings()
         .header("src/millionaire.h")
-        .generate().unwrap()
-        .write_to_file(out_dir.join("millionaire.rs")).unwrap();
+        .generate()
+        .unwrap()
+        .write_to_file(out_dir.join("millionaire.rs"))
+        .unwrap();
 
     // Rebuild if either of the files change
     println!("cargo:rerun-if-changed=src/millionaire.h");

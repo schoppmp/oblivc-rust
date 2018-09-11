@@ -1,7 +1,7 @@
 extern crate oblivc;
 extern crate test_oblivc;
 
-use test_oblivc::{millionaire,millionaire_args};
+use test_oblivc::{millionaire, millionaire_args};
 use std::thread;
 
 fn run_server() {
@@ -9,10 +9,10 @@ fn run_server() {
         input: 10,
         output: 0,
     };
-    let pd = oblivc::protocol_desc()
-        .party(1)
-        .accept("56734").unwrap();
-    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+    let pd = oblivc::protocol_desc().party(1).accept("56734").unwrap();
+    unsafe {
+        pd.exec_yao_protocol(millionaire, &mut args);
+    }
 }
 
 fn run_client() {
@@ -22,8 +22,11 @@ fn run_client() {
     };
     let pd = oblivc::protocol_desc()
         .party(2)
-        .connect("localhost", "56734").unwrap();
-    unsafe { pd.exec_yao_protocol(millionaire, &mut args); }
+        .connect("localhost", "56734")
+        .unwrap();
+    unsafe {
+        pd.exec_yao_protocol(millionaire, &mut args);
+    }
     // party 1 < party 2
     assert!(args.output == -1);
 }
